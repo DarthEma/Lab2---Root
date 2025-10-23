@@ -17,6 +17,11 @@ class prima_prova {
   int Nbins{200};
   // int Nextractions{1e5};
   TH1F* h1 = new TH1F("name", "estrazioni", Nbins, 0.0, 5.0);
+  std::vector<std::vector<double>> histograms;
+  std::vector<double> means;
+  std::vector<double> rmss;
+  std::vector<std::vector<double>> ibin;
+
 
  public:
   void draw_function(double k, double phi, double b,
@@ -24,9 +29,17 @@ class prima_prova {
 
   void random_extraction(int Nextractions);
 
-  void normalize(const char* outPng2, int Nextractions);
+  void normalize(int Nextractions);
+
+  void draw_hist(const char* outPng2);
 
   void compute_variance();
+
+  void riempi_masi(int Nextractions, int Nhist);
+
+  void compute_unc(int Nhist);
+
+  void get_unc(int i);
 };
 
 #endif
