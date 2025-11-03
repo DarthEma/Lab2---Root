@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <stdexcept>
 
 #include "TH1F.h"
 #include "TCanvas.h"
@@ -35,7 +36,7 @@ class prima_prova {
 
   void compute_variance();
 
-  void riempi_masi(int Nextractions, int Nhist);
+  void fill_histograms(int Nextractions, int Nhist);
 
   void compute_unc(int Nhist);
 

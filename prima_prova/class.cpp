@@ -59,10 +59,10 @@ void prima_prova::compute_variance() {
   std::cout << "the rms is: " << rms << '\n';
 }
 
-void prima_prova::riempi_masi(int Nextractions, int Nhist) {
+void prima_prova::fill_histograms(int Nextractions, int Nhist) {
   histograms.resize(Nhist);
 
-  for (int H = 0; H < Nhist; H++) {
+  for (int H = 0; H < Nhist; ++H) {
     gRandom->SetSeed(0);
     for (int N{1}; N <= Nextractions; ++N) {
       h1->Fill(f1->GetRandom());
@@ -71,26 +71,34 @@ void prima_prova::riempi_masi(int Nextractions, int Nhist) {
     histograms[H].resize(Nbins);
 
     for (int bin = 1; bin <= Nbins; ++bin) {
-      histograms[H].push_back(h1->GetBinContent(bin));
+      histograms[H][bin - 1] = (h1->GetBinContent(bin));
     }
+
+    if (histograms[H].size() != Nbins) {
+      throw std::runtime_error{"filling has failed"};
+    }
+  }
+
+  if (histograms.size() != Nhist) {
+    throw std::runtime_error{"wrong number of histograms"};
   }
 }
 
 void prima_prova::compute_unc(int Nhist) {
-
-  ibin.resize(Nbins); 
-  
+  ibin.resize(Nbins);
+  means.resize(Nbins);
+  rmss.resize(Nbins);
 
   for (int i = 0; i < Nbins; ++i) {
     ibin[i].resize(Nhist);
-    
+
     for (int k = 0; k < Nhist; ++k) {
       if (k >= (int)histograms.size() || i >= (int)histograms[k].size()) {
-        std::cerr << "Errore dimensioni masi\n";
+        std::cerr << "Errore dimensioni histograms\n";
         return;
       }
 
-      ibin[i].push_back(histograms[k][i]);
+      ibin[i][k] = (histograms[k][i]);
     }
 
     means[i] = std::accumulate(ibin[i].begin(), ibin[i].end(), 0.0) / Nhist;
@@ -103,8 +111,8 @@ void prima_prova::compute_unc(int Nhist) {
 }
 
 void prima_prova::get_unc(int i) {
-  std::cout << means[i];
-  std::cout << rmss[i];
+  std::cout << "the mean value in bin " << i << " is: " << means[i] << '\n';
+  std::cout << "and the rms is: " << rmss[i] << '\n';
 }
 
 /*

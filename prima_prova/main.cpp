@@ -10,7 +10,7 @@ int main() {
   p.compute_variance();
 
   int Nhist = 100;
-  p.riempi_masi(Nextractions, Nhist);
+  p.fill_histograms(Nextractions, Nhist);
   p.compute_unc(Nhist);
   std::cout << "select bin:" << '\n';
   int i;
