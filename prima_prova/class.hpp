@@ -15,6 +15,10 @@
 
 class prima_prova {
   TF1* f1 = new TF1("name", "(pow(cos([0]*x + [1]), 2.0) + [2])*[3]", -0.5, 5.5);
+  double k = 5.2;
+  double phi = 1.8;
+  double b = 0.2;
+
   int Nbins{200};
   // int Nextractions{1e5};
   TH1F* h1 = new TH1F("name", "estrazioni", Nbins, 0.0, 5.0);
@@ -25,8 +29,7 @@ class prima_prova {
 
 
  public:
-  void draw_function(double k, double phi, double b,
-                     const char* outPng1 = "function1.png");
+  void draw_function(const char* outPng1 = "function1.png");
 
   void random_extraction(int Nextractions);
 

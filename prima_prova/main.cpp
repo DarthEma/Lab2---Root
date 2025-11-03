@@ -3,7 +3,7 @@
 int main() {
   prima_prova p;
   int Nextractions = 1e6;
-  p.draw_function(5.2, 1.8, 0.2);
+  p.draw_function();
   p.random_extraction(Nextractions);
   p.normalize(Nextractions);
   p.draw_hist("function2.png");

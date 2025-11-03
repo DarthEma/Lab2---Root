@@ -3,8 +3,7 @@
 // g++ -std=c++17 -O2 main.cpp class.cpp $(root-config --cflags --libs) -o prova
 // ./prova
 
-void prima_prova::draw_function(double k, double phi, double b,
-                                const char* outPng1) {
+void prima_prova::draw_function(const char* outPng1) {
   // TF1* f1 = new TF1("name", "pow(cos([0]*x + [1]), 2.0) + [2]",
   // -0.5, 5.5);
   f1->SetParameter(0, k);
@@ -29,19 +28,17 @@ void prima_prova::normalize(/*const char* outPng2*/ int Nextractions) {
     double y = (5.0 / Nbins) * Nextractions;
     h1->SetBinContent(N, (x / y));
   }
-  double integ = f1->Integral(0.0, 5.0);
-  f1->SetParameter(3, (1.0 / integ));
-  /*
-    TCanvas* C2 = new TCanvas("C2", "Istogramma", 1200, 600);
-    f1->Draw();
-    h1->Draw("sameHIST");
-    C2->SaveAs(outPng2);
-    */
 };
 
 void prima_prova::draw_hist(const char* outPng2) {
   TCanvas* C2 = new TCanvas("C2", "Istogramma", 1200, 600);
-  f1->Draw();
+  TF1* f1_draw = new TF1("name", "(pow(cos([0]*x + [1]), 2.0) + [2])*[3]", -0.5, 5.5);
+  double integ = f1->Integral(0.0, 5.0);
+  f1_draw->SetParameter(0, k);
+  f1_draw->SetParameter(1, phi);
+  f1_draw->SetParameter(2, b);
+  f1_draw->SetParameter(3, (1.0 / integ));
+  f1_draw->Draw();
   h1->Draw("sameHIST");
   C2->SaveAs(outPng2);
 }
@@ -60,24 +57,26 @@ void prima_prova::compute_variance() {
 }
 
 void prima_prova::fill_histograms(int Nextractions, int Nhist) {
+  double area = (5.0 / Nbins) * Nextractions;
   histograms.resize(Nhist);
 
+  ///
   for (int H = 0; H < Nhist; ++H) {
     gRandom->SetSeed(0);
     for (int N{1}; N <= Nextractions; ++N) {
       h1->Fill(f1->GetRandom());
     }
-
     histograms[H].resize(Nbins);
-
     for (int bin = 1; bin <= Nbins; ++bin) {
-      histograms[H][bin - 1] = (h1->GetBinContent(bin));
+      histograms[H][bin - 1] = ((h1->GetBinContent(bin)) / area);
     }
 
+    ///
     if (histograms[H].size() != Nbins) {
       throw std::runtime_error{"filling has failed"};
     }
   }
+
 
   if (histograms.size() != Nhist) {
     throw std::runtime_error{"wrong number of histograms"};
