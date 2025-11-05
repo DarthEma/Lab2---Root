@@ -15,6 +15,14 @@ void prima_prova::draw_function(const char* outPng1) {
   C1->SaveAs(outPng1);
 }
 
+void prima_prova::function_normalized() {
+  double integ = f1->Integral(0.0, 5.0);
+  f1_norm->SetParameter(0, k);
+  f1_norm->SetParameter(1, phi);
+  f1_norm->SetParameter(2, b);
+  f1_norm->SetParameter(3, (1.0 / integ));
+}
+
 void prima_prova::random_extraction(int Nextractions) {
   gRandom->SetSeed(0);
   for (int N{1}; N <= Nextractions; ++N) {
@@ -32,13 +40,8 @@ void prima_prova::normalize(/*const char* outPng2*/ int Nextractions) {
 
 void prima_prova::draw_hist(const char* outPng2) {
   TCanvas* C2 = new TCanvas("C2", "Istogramma", 1200, 600);
-  TF1* f1_draw = new TF1("name", "(pow(cos([0]*x + [1]), 2.0) + [2])*[3]", -0.5, 5.5);
-  double integ = f1->Integral(0.0, 5.0);
-  f1_draw->SetParameter(0, k);
-  f1_draw->SetParameter(1, phi);
-  f1_draw->SetParameter(2, b);
-  f1_draw->SetParameter(3, (1.0 / integ));
-  f1_draw->Draw();
+  // TH1F* h1 = new TH1F("name", "estrazioni", Nbins, 0.0, 5.0);
+  f1_norm->Draw();
   h1->Draw("sameHIST");
   C2->SaveAs(outPng2);
 }
@@ -59,13 +62,17 @@ void prima_prova::compute_variance() {
 void prima_prova::fill_histograms(int Nextractions, int Nhist) {
   double area = (5.0 / Nbins) * Nextractions;
   histograms.resize(Nhist);
-
+  gRandom->SetSeed(0);
   ///
   for (int H = 0; H < Nhist; ++H) {
-    gRandom->SetSeed(0);
+    // set seed fuori dal ciclo
+    h1->Reset();
+
     for (int N{1}; N <= Nextractions; ++N) {
       h1->Fill(f1->GetRandom());
     }
+
+    histograms[H].clear();
     histograms[H].resize(Nbins);
     for (int bin = 1; bin <= Nbins; ++bin) {
       histograms[H][bin - 1] = ((h1->GetBinContent(bin)) / area);
@@ -76,7 +83,6 @@ void prima_prova::fill_histograms(int Nextractions, int Nhist) {
       throw std::runtime_error{"filling has failed"};
     }
   }
-
 
   if (histograms.size() != Nhist) {
     throw std::runtime_error{"wrong number of histograms"};
@@ -112,6 +118,48 @@ void prima_prova::compute_unc(int Nhist) {
 void prima_prova::get_unc(int i) {
   std::cout << "the mean value in bin " << i << " is: " << means[i] << '\n';
   std::cout << "and the rms is: " << rmss[i] << '\n';
+}
+
+void prima_prova::histo_from_function(const char* outPng3) {
+  for (int N = 1; N <= Nbins; ++N) {
+    double inf = (N - 1) * 5.0 / 200;
+    double sup = N * 5.0 / 200;
+    double mean_func_val = (f1_norm->Integral(inf, sup)) / (sup - inf);
+    h_f_f->SetBinContent(N, mean_func_val);
+  }
+  TCanvas* C3 = new TCanvas("C3", "istogramma teorico", 1200, 600);
+  h_f_f->Draw();
+  C3->SaveAs(outPng3);
+};
+
+void prima_prova::bin_smeering(int Ntoy) {
+  gRandom->SetSeed(0);
+  sim_val.resize(Nbins);
+
+  for (int N = 1; N <= Nbins; ++N) {
+    sim_val[N - 1].resize(Ntoy);
+    double mean = h_f_f->GetBinContent(N);
+    double variance = rmss[N - 1];
+
+    for (int k = 0; k < Ntoy; ++k) {
+      sim_val[N - 1][k] = gRandom->Gaus(mean, variance); //////
+    }
+
+    means_smeering[N - 1] =
+        std::accumulate(sim_val[N - 1].begin(), sim_val[N - 1].end(), 0.0) /
+        Ntoy;
+    double sum = 0.0;
+    for (int k = 0; k < Ntoy; ++k) {
+      sum += pow((sim_val[N - 1][k] - means_smeering[N - 1]), 2);
+    }
+    rmss_smeering[N - 1] = sqrt(sum / (Ntoy - 1));
+  }
+}
+
+void prima_prova::get_unc_smeering(int i) {
+  std::cout << "using the bin smeering method," << '\n';
+  std::cout << "the mean value in bin " << i << " is: " << means_smeering[i] << '\n';
+  std::cout << "and the rms is: " << rmss_smeering[i] << '\n';
 }
 
 /*
