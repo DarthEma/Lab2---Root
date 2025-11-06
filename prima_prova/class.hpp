@@ -35,6 +35,11 @@ class prima_prova {
   std::vector<double> means_smeering;
   std::vector<double> rmss_smeering;
 
+  // punto 3.4 //
+  double k_var = 5.2 * 0.02;
+  double phi_var = 1.8 * 0.05;
+  double b_var = 0.2 * 0.01;
+
 
  public:
   void draw_function(const char* outPng1 = "function1.png");
@@ -49,7 +54,7 @@ class prima_prova {
 
   void compute_variance();
 
-  void fill_histograms(int Nextractions, int Nhist);
+  void fill_histograms(int Nextractions, int Nhist, bool err);
 
   void compute_unc(int Nhist);
 
@@ -60,6 +65,8 @@ class prima_prova {
   void bin_smeering(int Ntoy);
 
   void get_unc_smeering(int i);
+
+  void fit();
 };
 
 #endif

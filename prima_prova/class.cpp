@@ -59,14 +59,22 @@ void prima_prova::compute_variance() {
   std::cout << "the rms is: " << rms << '\n';
 }
 
-void prima_prova::fill_histograms(int Nextractions, int Nhist) {
+//// METODI 3.2 ////
+
+void prima_prova::fill_histograms(int Nextractions, int Nhist, bool err) {
   double area = (5.0 / Nbins) * Nextractions;
   histograms.resize(Nhist);
   gRandom->SetSeed(0);
-  ///
+  
   for (int H = 0; H < Nhist; ++H) {
-    // set seed fuori dal ciclo
     h1->Reset();
+  
+    if (err == true) {
+    f1->SetParameter(0, gRandom->Gaus(k, k_var));
+    f1->SetParameter(1, gRandom->Gaus(phi, phi_var));
+    f1->SetParameter(2, gRandom->Gaus(b, b_var));
+    f1->SetParameter(3, 1.0);
+  }
 
     for (int N{1}; N <= Nextractions; ++N) {
       h1->Fill(f1->GetRandom());
@@ -77,13 +85,10 @@ void prima_prova::fill_histograms(int Nextractions, int Nhist) {
     for (int bin = 1; bin <= Nbins; ++bin) {
       histograms[H][bin - 1] = ((h1->GetBinContent(bin)) / area);
     }
-
-    ///
     if (histograms[H].size() != Nbins) {
       throw std::runtime_error{"filling has failed"};
     }
   }
-
   if (histograms.size() != Nhist) {
     throw std::runtime_error{"wrong number of histograms"};
   }
@@ -120,10 +125,20 @@ void prima_prova::get_unc(int i) {
   std::cout << "and the rms is: " << rmss[i] << '\n';
 }
 
+//// METODI 3.3 ////
+
 void prima_prova::histo_from_function(const char* outPng3) {
   for (int N = 1; N <= Nbins; ++N) {
     double inf = (N - 1) * 5.0 / 200;
     double sup = N * 5.0 / 200;
+/*
+    if (err == true) {
+    f1_norm->SetParameter(0, gRandom->Gaus(k, k_var));
+    f1_norm->SetParameter(1, gRandom->Gaus(phi, phi_var));
+    f1_norm->SetParameter(2, gRandom->Gaus(b, b_var));
+    /// eventualmente risettare il parametro 3
+  }
+*/
     double mean_func_val = (f1_norm->Integral(inf, sup)) / (sup - inf);
     h_f_f->SetBinContent(N, mean_func_val);
   }
@@ -135,6 +150,8 @@ void prima_prova::histo_from_function(const char* outPng3) {
 void prima_prova::bin_smeering(int Ntoy) {
   gRandom->SetSeed(0);
   sim_val.resize(Nbins);
+  means_smeering.resize(Nbins);
+  rmss_smeering.resize(Nbins);
 
   for (int N = 1; N <= Nbins; ++N) {
     sim_val[N - 1].resize(Ntoy);
@@ -142,7 +159,7 @@ void prima_prova::bin_smeering(int Ntoy) {
     double variance = rmss[N - 1];
 
     for (int k = 0; k < Ntoy; ++k) {
-      sim_val[N - 1][k] = gRandom->Gaus(mean, variance); //////
+      sim_val[N - 1][k] = gRandom->Gaus(mean, variance);  //////
     }
 
     means_smeering[N - 1] =
@@ -158,76 +175,10 @@ void prima_prova::bin_smeering(int Ntoy) {
 
 void prima_prova::get_unc_smeering(int i) {
   std::cout << "using the bin smeering method," << '\n';
-  std::cout << "the mean value in bin " << i << " is: " << means_smeering[i] << '\n';
+  std::cout << "the mean value in bin " << i << " is: " << means_smeering[i]
+            << '\n';
   std::cout << "and the rms is: " << rmss_smeering[i] << '\n';
 }
 
-/*
-  for (int i = 1; i <= Nbins; ++i ) {
-    double sum = 0;
+/////// AREA DI LAVORO!!!!! ////////     /!\
 
-    for(int k = 0; k < Nhist; ++k) {
-     sum += masi[k][i]
-    }
-
-    means[i] = sum / Nhist
-
-    for (int j = 0; j < Nhist; ++j)
-    {
-    }
-  }
-
-  */
-
-/*
-void prima_prova::compare() {
-  for (int N{1}; N <= Nbins; ++N) {
-    double x = h1->GetBinCenter
-
-  }
-}
-*/
-/*
-
-void draw_function(double k, double phi, double b,
-                   const char* outPng = "function.png") {
-  TF1* f1 = new TF1("name", "pow(cos([0]*x + [1]), 2.0) + [2]", -0.5, 5.5);
-  f1->SetParameter(0, k);
-  f1->SetParameter(1, phi);
-  f1->SetParameter(2, b);
-  TCanvas* C = new TCanvas("C", "Distribuzione Teorica", 1200, 600);
-  f1->Draw();
-  C->SaveAs(outPng);
-
-  double a{0.0};
-  double b{5.0};
-  double max = f1->GetMaximum(a, b);
-  int trials{0};
-  int Nevents{3000};
-  int Nbins{100};
-  int N{0};
-  std::vector<double> values;
-
-      TRandom3 rnd(seed);
-
-  while (N <= Nevents)
-  {
-    double x = rnd.Uniform(a, b);
-    double y = rnd.Uniform(0.0, max);
-    if(y <= (f1->Eval(x))) {
-      values.push_back(y);
-      ++N;
-    }
-  }
-
-
-
-
-}
-
-int main() {
-  draw_function(5.2, 1.8, 0.2);
-  return 0;
-}
-
-*/
