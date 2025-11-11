@@ -14,8 +14,8 @@
 #include "TRandom3.h"
 
 class prima_prova {
-  TF1* f1 = new TF1("name", "(pow(cos([0]*x + [1]), 2.0) + [2])*[3]", -0.5, 5.5);
-  TF1* f1_norm = new TF1("name", "(pow(cos([0]*x + [1]), 2.0) + [2])*[3]", -0.5, 5.5);
+  TF1* f1 = new TF1("funzione originale", "(pow(cos([0]*x + [1]), 2.0) + [2])*[3]", -0.5, 5.5);
+  TF1* f1_norm = new TF1("funzione normalizzata", "(pow(cos([0]*x + [1]), 2.0) + [2])*[3]", -0.5, 5.5);
   double k = 5.2;
   double phi = 1.8;
   double b = 0.2;
@@ -23,14 +23,14 @@ class prima_prova {
   // int Nextractions{1e5};
 
   // punto 3.2 //
-  TH1F* h1 = new TH1F("name", "estrazioni", Nbins, 0.0, 5.0);
+  TH1F* h1 = new TH1F("istogramma generato", "estrazioni", Nbins, 0.0, 5.0);
   std::vector<std::vector<double>> histograms;
   std::vector<double> means;
   std::vector<double> rmss;
   std::vector<std::vector<double>> ibin;
 
   // punto 3.3 //
-  TH1F* h_f_f = new TH1F("name", "istogramma da funzione", Nbins, 0.0, 5.0);
+  TH1F* h_f_f = new TH1F("istogramma estratto", "istogramma da funzione", Nbins, 0.0, 5.0);
   std::vector<std::vector<double>> sim_val;
   std::vector<double> means_smeering;
   std::vector<double> rmss_smeering;
@@ -40,8 +40,13 @@ class prima_prova {
   double phi_var = 1.8 * 0.05;
   double b_var = 0.2 * 0.01;
 
+  // Seconda Prova //
+  double remainder;
+
 
  public:
+  void set_parameters();
+
   void draw_function(const char* outPng1 = "function1.png");
 
   void function_normalized();
@@ -66,7 +71,9 @@ class prima_prova {
 
   void get_unc_smeering(int i);
 
-  void fit();
+  void fit(const char* outPng4);
+
+  void compute_remainder();
 };
 
 #endif

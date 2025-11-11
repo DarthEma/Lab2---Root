@@ -3,13 +3,15 @@
 // g++ -std=c++17 -O2 main.cpp class.cpp $(root-config --cflags --libs) -o prova
 // ./prova
 
-void prima_prova::draw_function(const char* outPng1) {
-  // TF1* f1 = new TF1("name", "pow(cos([0]*x + [1]), 2.0) + [2]",
-  // -0.5, 5.5);
+void prima_prova::set_parameters() {
   f1->SetParameter(0, k);
   f1->SetParameter(1, phi);
   f1->SetParameter(2, b);
   f1->SetParameter(3, 1.0);
+}
+void prima_prova::draw_function(const char* outPng1) {
+  // TF1* f1 = new TF1("name", "pow(cos([0]*x + [1]), 2.0) + [2]",
+  // -0.5, 5.5); 
   TCanvas* C1 = new TCanvas("C1", "Distribuzione Teorica", 1200, 600);
   f1->Draw();
   C1->SaveAs(outPng1);
@@ -65,16 +67,17 @@ void prima_prova::fill_histograms(int Nextractions, int Nhist, bool err) {
   double area = (5.0 / Nbins) * Nextractions;
   histograms.resize(Nhist);
   gRandom->SetSeed(0);
-  
+
   for (int H = 0; H < Nhist; ++H) {
     h1->Reset();
-  
+
     if (err == true) {
-    f1->SetParameter(0, gRandom->Gaus(k, k_var));
-    f1->SetParameter(1, gRandom->Gaus(phi, phi_var));
-    f1->SetParameter(2, gRandom->Gaus(b, b_var));
-    f1->SetParameter(3, 1.0);
-  }
+      f1->SetParameter(0, gRandom->Gaus(k, k_var));
+      f1->SetParameter(1, gRandom->Gaus(phi, phi_var));
+      f1->SetParameter(2, gRandom->Gaus(b, b_var));
+      f1->SetParameter(3, 1.0);
+    }  // genera a ogni estrazione i parametri della gaussiana
+       // in modo da propagare le incertezze sui parametri
 
     for (int N{1}; N <= Nextractions; ++N) {
       h1->Fill(f1->GetRandom());
@@ -84,7 +87,8 @@ void prima_prova::fill_histograms(int Nextractions, int Nhist, bool err) {
     histograms[H].resize(Nbins);
     for (int bin = 1; bin <= Nbins; ++bin) {
       histograms[H][bin - 1] = ((h1->GetBinContent(bin)) / area);
-    }
+    }  // normalizza i vari istogrammi
+
     if (histograms[H].size() != Nbins) {
       throw std::runtime_error{"filling has failed"};
     }
@@ -121,8 +125,13 @@ void prima_prova::compute_unc(int Nhist) {
 }
 
 void prima_prova::get_unc(int i) {
-  std::cout << "the mean value in bin " << i << " is: " << means[i] << '\n';
-  std::cout << "and the rms is: " << rmss[i] << '\n';
+  if (rmss.empty()) {
+    std::cout << "rmss not computed!!" << '\n';
+  } else {
+    std::cout << "rms was computed!!" << '\n';
+    std::cout << "the mean value in bin " << i << " is: " << means[i] << '\n';
+    std::cout << "and the rms is: " << rmss[i] << '\n';
+  }
 }
 
 //// METODI 3.3 ////
@@ -131,14 +140,14 @@ void prima_prova::histo_from_function(const char* outPng3) {
   for (int N = 1; N <= Nbins; ++N) {
     double inf = (N - 1) * 5.0 / 200;
     double sup = N * 5.0 / 200;
-/*
-    if (err == true) {
-    f1_norm->SetParameter(0, gRandom->Gaus(k, k_var));
-    f1_norm->SetParameter(1, gRandom->Gaus(phi, phi_var));
-    f1_norm->SetParameter(2, gRandom->Gaus(b, b_var));
-    /// eventualmente risettare il parametro 3
-  }
-*/
+    /*
+        if (err == true) {
+        f1_norm->SetParameter(0, gRandom->Gaus(k, k_var));
+        f1_norm->SetParameter(1, gRandom->Gaus(phi, phi_var));
+        f1_norm->SetParameter(2, gRandom->Gaus(b, b_var));
+        /// eventualmente risettare il parametro 3
+      }
+    */
     double mean_func_val = (f1_norm->Integral(inf, sup)) / (sup - inf);
     h_f_f->SetBinContent(N, mean_func_val);
   }
@@ -180,5 +189,22 @@ void prima_prova::get_unc_smeering(int i) {
   std::cout << "and the rms is: " << rmss_smeering[i] << '\n';
 }
 
-/////// AREA DI LAVORO!!!!! ////////     /!\
+/////// AREA DI LAVORO!!!!! ////////     /!
 
+void prima_prova::fit(const char* outPng4) {
+  h1->Fit(f1, "R");
+  TCanvas* C4 = new TCanvas("C4", "Fit", 1200, 600);
+  h1->Draw();
+  C4->SaveAs(outPng4);
+}
+
+void prima_prova::compute_remainder() {
+  remainder = 0.0;
+  for (int k = 1; k <= Nbins; ++k)  // occhio!
+  {
+    remainder += ((h1->GetBinContent(k)) -
+                  (f1->Eval((5.0 / Nbins) * k - 5.0 / (2 * Nbins)))) /
+                 rmss[k - 1];
+  }
+  std::cout << "the remainder is: " << remainder << '\n';
+}
